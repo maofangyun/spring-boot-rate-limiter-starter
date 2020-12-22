@@ -2,6 +2,7 @@ package com.mfy.limiter.filter;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -23,7 +24,8 @@ public abstract class RateLimiter implements Filter {
 
     private final AtomicInteger atomicInteger = new AtomicInteger();
 
-    private final static String FILE_PATH = "classpath:lua/*.lua";
+    @Value("${limiter.scan.lua.path}")
+    private String filePath;
 
     protected String key;
 
@@ -34,13 +36,16 @@ public abstract class RateLimiter implements Filter {
         // 读取lua脚本传递到Redis
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         try {
-            Resource[] resources = resolver.getResources(FILE_PATH);
+            Resource[] resources = resolver.getResources(filePath);
             for (Resource resource : resources){
+                String filename = resource.getFilename();
+                if(SCRIPT_MAP.containsKey(filename)){
+                    continue;
+                }
                 DefaultRedisScript<Long> script = new DefaultRedisScript<>();
                 // 指定ReturnType为Long.class，注意这里不能使用Integer.class，因为ReturnType不支持。只支持List.class, Boolean.class和Long.class
                 script.setResultType(Long.class);
                 script.setLocation(resource);
-                String filename = resource.getFilename();
                 SCRIPT_MAP.put(filename,script);
             }
         } catch (IOException e) {

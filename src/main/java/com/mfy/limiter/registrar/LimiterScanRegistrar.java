@@ -10,14 +10,15 @@ import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Arrays;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.Set;
 
 public class LimiterScanRegistrar implements ImportBeanDefinitionRegistrar {
 
-    private static final String BEAN_NAME = "limiterScanRegistrar";
+    private static final String BEAN_NAME = "limiterComponentRegisteringPostProcessor";
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
@@ -50,8 +51,8 @@ public class LimiterScanRegistrar implements ImportBeanDefinitionRegistrar {
         AnnotationAttributes attributes = AnnotationAttributes
                 .fromMap(metadata.getAnnotationAttributes(LimiterScan.class.getName()));
         String[] basePackages = attributes.getStringArray("basePackages");
+        Set<String> packagesToScan = new HashSet<>();
         Class<?>[] basePackageClasses = attributes.getClassArray("basePackageClasses");
-        Set<String> packagesToScan = new LinkedHashSet<>();
         packagesToScan.addAll(Arrays.asList(basePackages));
         for (Class<?> basePackageClass : basePackageClasses) {
             packagesToScan.add(ClassUtils.getPackageName(basePackageClass));
@@ -61,4 +62,5 @@ public class LimiterScanRegistrar implements ImportBeanDefinitionRegistrar {
         }
         return packagesToScan;
     }
+
 }
